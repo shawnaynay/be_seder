@@ -1,4 +1,4 @@
-const V = 'seder-v2';
+const V = 'seder-v3';
 const FILES = [
   './', './index.html', './manifest.webmanifest',
   './icon-180.png', './icon-192.png', './icon-512.png', './maskable-512.png',

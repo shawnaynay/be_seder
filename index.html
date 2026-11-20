@@ -113,7 +113,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <div id="toast"></div>
 <script>
 var KEY='seder';
-var BASE={ev:[],tk:[],id:[],rm:[],inc:[],fu:{st:'שוקל',notes:'',q:{1:true,2:true,3:true,7:true}},cap:'',theme:'dark',name:''};
+var BASE={ev:[],tk:[],id:[],rm:[],inc:[],exp:[],fu:{st:'שוקל',notes:'',q:{1:true,2:true,3:true,7:true}},cap:'',theme:'dark',name:''};
 var S=JSON.parse(JSON.stringify(BASE)),tab='today';
 var TABS=[['today','☀️','היום'],['ev','📅','לוז'],['tk','✅','משימות'],['id','💡','רעיונות'],['rm','🔔','תזכורות'],['more','✨','עוד']];
 var SUB={inc:1,fu:1,set:1,op:1};
@@ -239,7 +239,7 @@ function vRm(){
   '<div class="tip"><b>שתזכורת תקפוץ גם כשהאפליקציה סגורה:</b> לחץ 📲 ליד התזכורת והיא תיכנס ליומן של הטלפון עם התראה. זה עובד גם בלי אינטרנט.'+(perm==='default'?'<div style="margin-top:10px"><button class="go soft" data-a="perm">הפעלת התראות כשהאפליקציה פתוחה</button></div>':'')+'</div>';
 }
 function vMore(){
-  var it=[['op','🧾','פתיחת עוסק פטור','מדריך שלב אחר שלב'],['inc','💰','הכנסות','מעקב לקראת עוסק פטור'],['fu','🎪','פיוז׳ן קלצ׳ר','מה לברר לפני שמחליטים'],['set','⚙️','הגדרות וגיבוי','שם, מראה, גיבוי ושחזור']];
+  var it=[['op','🧾','פתיחת עוסק פטור','מדריך שלב אחר שלב'],['inc','💰','הכנסות והוצאות','רווח חודשי ותקרת עוסק פטור'],['fu','🎪','פיוז׳ן קלצ׳ר','מה לברר לפני שמחליטים'],['set','⚙️','הגדרות וגיבוי','שם, מראה, גיבוי ושחזור']];
   return '<h1>עוד</h1><p class="sub">כל השאר</p><div class="card menu"><ul>'+it.map(function(x){return '<li class="row" data-a="tab" data-k="'+x[0]+'" role="button" tabindex="0"><span class="ic">'+x[1]+'</span><span class="tx"><b>'+x[2]+'</b><small>'+x[3]+'</small></span><span class="chev">‹</span></li>'}).join('')+'</ul></div>';
 }
 var FQ=['כמה משלמים על חבילת התוכן (סכום ומספר פרסומים)','כמה אחוז עמלה על כל כרטיס שנמכר דרכי','איך עוקבים אחרי המכירות שלי (קוד אישי או קישור)','מתי ואיך משולם התשלום','איזו זכות שימוש יש להם בתוכן ולכמה זמן','האם יש בלעדיות מולי או מול פסטיבלים אחרים','האם הכול מופיע בחוזה כתוב','האם זה יכול להוביל לסט בפסטיבל'];
@@ -264,17 +264,30 @@ function vOp(){
   '<p class="note">המידע נכון לנובמבר 2026. סכומים ונהלים משתנים, אז לפני שמגישים כדאי לוודא באתר רשות המסים. אני לא רואה חשבון, וכדאי להתייעץ עם אחד לגבי המצב שלך, במיוחד בשנה שבה יש גם משכורת וגם הכנסה כעצמאי.</p>';
 }
 function back(){return '<button class="ib" style="margin-inline-start:-8px;font-size:.95rem;width:auto;padding:0 8px" data-a="tab" data-k="more">→ חזרה</button>'}
+var mon=null,mt='in';
+var CAT={in:['גיג','תוכן ממומן','עמלות כרטיסים','הפקה','אחר'],out:['ציוד','תוכנה ומנויים','נסיעות','פרסום ושיווק','לימודים','אחר']};
 function vInc(){
-  var y=String(new Date().getFullYear()),ym=today().slice(0,7),yr=0,mo=0;
-  S.inc.forEach(function(x){if(x.dt.slice(0,4)===y)yr+=x.a;if(x.dt.slice(0,7)===ym)mo+=x.a});
-  var cap=parseFloat(S.cap)||122833,pct=cap?Math.min(100,Math.round(yr/cap*100)):0,nf=function(n){return n.toLocaleString('he-IL')+' ₪'};
-  var rows=S.inc.slice().sort(function(a,b){return b.dt.localeCompare(a.dt)}).map(function(x){return '<li class="row"><span class="time">'+nf(x.a)+'</span><span class="tx">'+esc(x.t)+'<small>'+fd(x.dt)+' · '+esc(x.g)+'</small></span>'+xb('inc',x.i)+'</li>'});
-  return back()+'<h1>הכנסות</h1><p class="sub">מעקב לקראת עוסק פטור</p>'+
-  '<div class="stats"><div class="stat"><b>'+nf(mo)+'</b><span>החודש</span></div><div class="stat"><b>'+nf(yr)+'</b><span>מתחילת השנה</span></div></div>'+
-  '<div class="add"><input type="number" id="cap" class="full" inputmode="decimal" placeholder="תקרה שנתית לעוסק פטור (₪)" value="'+(cap||'')+'" aria-label="תקרה שנתית">'+(cap?'<div style="flex:1 1 100%"><div class="bar"><i style="width:'+pct+'%"></i></div><span class="note" style="margin:0">'+pct+'% מהתקרה</span></div>':'')+'</div>'+
-  '<p class="note">התקרה ל־2026 היא 122,833 ₪ (מחזור, כלומר כל ההכנסות לפני הוצאות). היא מתעדכנת כל שנה. <a href="#op" data-a="tab" data-k="op" style="color:var(--ac)">מדריך הפתיחה ←</a></p>'+
-  '<h2>הוספת הכנסה</h2><div class="add"><input type="text" id="a1" placeholder="על מה התשלום?"><input type="number" id="a2" inputmode="decimal" placeholder="סכום (₪)" aria-label="סכום"><input type="date" id="a3" value="'+today()+'" aria-label="תאריך"><select id="a4" aria-label="מקור"><option>גיג</option><option>תוכן ממומן</option><option>עמלות כרטיסים</option><option>אחר</option></select><button class="go" data-a="addInc">שמירה</button></div>'+
-  '<h2>היסטוריה</h2>'+card(rows,'עדיין אין הכנסות.');
+  var nf=function(n){return Math.round(n).toLocaleString('he-IL')+' ₪'};
+  var ym=mon||today().slice(0,7),y=ym.slice(0,4),cy=String(new Date().getFullYear());
+  var inM=0,outM=0,inY=0,outY=0,inCY=0,byCat={};
+  S.inc.forEach(function(x){if(x.dt.slice(0,7)===ym)inM+=x.a;if(x.dt.slice(0,4)===y)inY+=x.a;if(x.dt.slice(0,4)===cy)inCY+=x.a});
+  (S.exp||[]).forEach(function(x){if(x.dt.slice(0,7)===ym){outM+=x.a;byCat[x.g]=(byCat[x.g]||0)+x.a}if(x.dt.slice(0,4)===y)outY+=x.a});
+  var cap=parseFloat(S.cap)||122833,pct=Math.min(100,Math.round(inCY/cap*100)),netM=inM-outM,netY=inY-outY;
+  var mName=new Date(ym+'-01T00:00').toLocaleDateString('he-IL',{month:'long',year:'numeric'});
+  var list=S.inc.filter(function(x){return x.dt.slice(0,7)===ym}).map(function(x){return {x:x,k:'inc'}}).concat((S.exp||[]).filter(function(x){return x.dt.slice(0,7)===ym}).map(function(x){return {x:x,k:'exp'}})).sort(function(a,b){return b.x.dt.localeCompare(a.x.dt)});
+  var rows=list.map(function(o){var x=o.x,isIn=o.k==='inc';return '<li class="row"><span class="time" style="color:'+(isIn?'var(--ok)':'var(--hot)')+'">'+(isIn?'+':'−')+nf(x.a)+'</span><span class="tx">'+esc(x.t)+'<small>'+fd(x.dt)+' · '+esc(x.g)+'</small></span>'+xb(o.k,x.i)+'</li>'});
+  var cats=Object.keys(byCat).sort(function(a,b){return byCat[b]-byCat[a]}),mx=cats.length?byCat[cats[0]]:1;
+  var catHtml=cats.length?'<h2>לאן הלך הכסף החודש</h2><div class="card" style="padding:12px 16px">'+cats.map(function(c){return '<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:.88rem"><span>'+esc(c)+'</span><b>'+nf(byCat[c])+'</b></div><div class="bar" style="height:7px"><i style="width:'+Math.round(byCat[c]/mx*100)+'%;background:var(--hot)"></i></div></div>'}).join('')+'</div>':'';
+  var opts=CAT[mt].map(function(c){return '<option>'+c+'</option>'}).join('');
+  return back()+'<h1>הכנסות והוצאות</h1><p class="sub">כמה נכנס, כמה יצא, כמה נשאר</p>'+
+  '<div class="add" style="align-items:center;justify-content:space-between;flex-wrap:nowrap"><button class="ib" data-a="mon" data-k="-1" aria-label="חודש קודם">→</button><b>'+mName+'</b><button class="ib" data-a="mon" data-k="1" aria-label="חודש הבא">←</button></div>'+
+  '<div class="stats" style="margin-top:12px"><div class="stat"><b style="color:var(--ok)">'+nf(inM)+'</b><span>הכנסות</span></div><div class="stat"><b style="color:var(--hot)">'+nf(outM)+'</b><span>הוצאות</span></div></div>'+
+  '<div class="hero" style="padding:16px 20px"><div class="lb">נשאר לך החודש</div><div class="big">'+(netM<0?'−':'')+nf(Math.abs(netM))+'</div><div class="when">מתחילת '+y+': הכנסות '+nf(inY)+' · הוצאות '+nf(outY)+' · רווח '+(netY<0?'−':'')+nf(Math.abs(netY))+'</div></div>'+
+  '<h2>הוספה</h2><div class="add"><div class="seg"><button class="'+(mt==='in'?'on':'')+'" data-a="mt" data-k="in">➕ הכנסה</button><button class="'+(mt==='out'?'on':'')+'" data-a="mt" data-k="out">➖ הוצאה</button></div><input type="text" id="a1" placeholder="'+(mt==='in'?'על מה קיבלת?':'על מה שילמת?')+'"><input type="number" id="a2" inputmode="decimal" placeholder="סכום (₪)" aria-label="סכום"><input type="date" id="a3" value="'+(ym===today().slice(0,7)?today():ym+'-01')+'" aria-label="תאריך"><select id="a4" aria-label="קטגוריה">'+opts+'</select><button class="go" data-a="addInc">'+(mt==='in'?'שמירת הכנסה':'שמירת הוצאה')+'</button></div>'+
+  catHtml+
+  '<h2>התנועות של '+mName+'</h2>'+card(rows,'אין תנועות בחודש הזה.')+
+  '<h2>תקרת עוסק פטור '+cy+'</h2><div class="add"><div style="flex:1 1 100%"><div style="display:flex;justify-content:space-between;font-size:.9rem"><span>'+nf(inCY)+' מתוך '+nf(cap)+'</span><b>'+pct+'%</b></div><div class="bar"><i style="width:'+pct+'%"></i></div></div><input type="number" id="cap" class="full" inputmode="decimal" placeholder="תקרה שנתית (₪)" value="'+cap+'" aria-label="תקרה שנתית"></div>'+
+  '<p class="note">התקרה נמדדת לפי ההכנסות בלבד (מחזור), לא לפי הרווח. ל־2026 היא 122,833 ₪ ומתעדכנת כל שנה. כדאי לשמור קבלות על הוצאות, אלא אם בוחרים במסלול עסק זעיר. <a href="#op" data-a="tab" data-k="op" style="color:var(--ac)">מדריך הפתיחה ←</a></p>';
 }
 function vFu(){
   var f=S.fu,n=FQ.filter(function(_,i){return f.q[i]}).length;
@@ -318,7 +331,9 @@ document.addEventListener('click',function(e){
   else if(a==='addTk'){var t2=val('a1');if(!t2)return;S.tk.unshift({i:uid(),t:t2,g:val('a2'),d:false});save()}
   else if(a==='addId'){var t3=val('a1');if(!t3)return;S.id.unshift({i:uid(),t:t3,g:val('a2')});save();flash('נשמר ✓')}
   else if(a==='addRm'){var t4=val('a1'),at=val('a2');if(!t4||!at)return flash('חסר טקסט או מועד');S.rm.push({i:uid(),t:t4,at:at.slice(0,16),rep:segVal('rep'),d:false,n:at<=nowL()?1:0});rep='';save();flash('התזכורת נקבעה ✓')}
-  else if(a==='addInc'){var t5=val('a1'),am=parseFloat(val('a2')),d5=val('a3');if(!t5||!(am>0)||!d5)return flash('חסר תיאור או סכום');S.inc.unshift({i:uid(),t:t5,a:am,dt:d5,g:val('a4')});save()}
+  else if(a==='addInc'){var t5=val('a1'),am=parseFloat(val('a2')),d5=val('a3');if(!t5||!(am>0)||!d5)return flash('חסר תיאור או סכום');if(!S.exp)S.exp=[];(mt==='out'?S.exp:S.inc).unshift({i:uid(),t:t5,a:am,dt:d5,g:val('a4')});mon=d5.slice(0,7);save();flash(mt==='out'?'ההוצאה נשמרה ✓':'ההכנסה נשמרה ✓')}
+  else if(a==='mt'){mt=k;render()}
+  else if(a==='mon'){var c0=new Date((mon||today().slice(0,7))+'-01T00:00');c0.setMonth(c0.getMonth()+parseInt(k,10));mon=dstr(c0).slice(0,7);render()}
   else if(a==='opq'){if(!S.op)S.op={q:{}};S.op.q[id]=!S.op.q[id];save()}
   else if(a==='opRm'){var d0=new Date();if(k==='bl'){d0.setDate(d0.getDate()+7);d0.setHours(10,0,0,0);S.rm.push({i:uid(),t:'לבדוק באזור האישי בביטוח לאומי שנפתח תיק עצמאי',at:lstr(d0),rep:'',d:false})}else{var y=d0.getMonth()===0&&d0.getDate()<25?d0.getFullYear():d0.getFullYear()+1;S.rm.push({i:uid(),t:'להגיש למע״מ הצהרה שנתית על המחזור של שנה שעברה',at:y+'-01-20T10:00',rep:'',d:false})}save();flash('התזכורת נוספה ✓')}
   else if(a==='fq'){S.fu.q[id]=!S.fu.q[id];save()}

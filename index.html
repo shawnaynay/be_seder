@@ -116,7 +116,7 @@ var KEY='seder';
 var BASE={ev:[],tk:[],id:[],rm:[],inc:[],exp:[],fu:{st:'שוקל',notes:'',q:{1:true,2:true,3:true,7:true}},cap:'',theme:'dark',name:''};
 var S=JSON.parse(JSON.stringify(BASE)),tab='today';
 var TABS=[['today','☀️','היום'],['ev','📅','לוז'],['tk','✅','משימות'],['id','💡','רעיונות'],['rm','🔔','תזכורות'],['more','✨','עוד']];
-var SUB={inc:1,fu:1,set:1,op:1};
+var SUB={inc:1,fu:1,set:1,op:1,ai:1};
 var pad=function(n){return String(n).padStart(2,'0')};
 var dstr=function(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
 var lstr=function(d){return dstr(d)+'T'+pad(d.getHours())+':'+pad(d.getMinutes())};
@@ -306,9 +306,9 @@ function vSet(){
   '<div class="tip"><b>התקנה באייפון:</b> לפתוח ב־Safari ← כפתור השיתוף ← ״הוספה למסך הבית״.<br><b>באנדרואיד:</b> לפתוח ב־Chrome ← תפריט ⋮ ← ״התקנת אפליקציה״.</div>';
 }
 function render(){
-  var main=SUB[tab]?'more':tab;
+  var main=tab==='ai'?'':SUB[tab]?'more':tab;
   $('#nav').innerHTML=TABS.map(function(t){return '<button class="'+(main===t[0]?'on':'')+'" data-a="tab" data-k="'+t[0]+'" aria-label="'+t[2]+'"><span>'+t[1]+'</span>'+t[2]+(t[0]==='rm'?'<i class="dot"></i>':'')+'</button>'}).join('');
-  $('#v').innerHTML={today:vToday,ev:vEv,tk:vTk,id:vId,rm:vRm,more:vMore,inc:vInc,fu:vFu,op:vOp,set:vSet}[tab]();
+  $('#v').innerHTML={today:vToday,ev:vEv,tk:vTk,id:vId,rm:vRm,more:vMore,inc:vInc,fu:vFu,op:vOp,set:vSet,ai:function(){return window.vAi?vAi():''}}[tab]();
   var dt=document.querySelectorAll('nav .dot');var c=dueList().length;dt.forEach(function(d){d.textContent=c||'';d.style.display=c?'':'none'});
 }
 function val(id){var e=$('#'+id);return e?e.value.trim():''}
@@ -369,5 +369,6 @@ render();check();setInterval(check,20000);
 if('serviceWorker' in navigator&&location.protocol!=='file:'){navigator.serviceWorker.register('sw.js').catch(function(){})}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 </script>
+<script src="ai.js"></script>
 </body>
 </html>

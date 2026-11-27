@@ -14,6 +14,8 @@ var ACT={
   idea:function(a){S.id.unshift({i:uid(),t:a.text,g:a.category||'אחר'});return 'נשמר רעיון: '+a.text},
   reminder:function(a){S.rm.push({i:uid(),t:a.text,at:a.at.slice(0,16),rep:a.repeat||'',d:false});return 'תזכורת נקבעה ל'+fdt(a.at)+': '+a.text},
   event:function(a){S.ev.push({i:uid(),t:a.text,dt:a.date,tm:a.time||''});return 'נוסף ללוז, '+fd(a.date)+(a.time?' ב־'+a.time:'')+': '+a.text},
+  content:function(a){if(!S.ct)S.ct=[];S.ct.unshift({i:uid(),t:a.text,pl:a.platform||'רילס',st:a.stage||'רעיון',dt:a.date||'',tm:a.time||'',hook:a.hook||''});return 'נוסף לתוכן ('+(a.stage||'רעיון')+'): '+a.text},
+  deal:function(a){if(!S.dl)S.dl=[];S.dl.unshift({i:uid(),t:a.text,a:+a.amount||0,st:a.status||'פנייה',due:a.due||''});return 'נוסף לשת״פים: '+a.text+(a.amount?' · '+nf(+a.amount):'')},
   money:function(a){if(!S.exp)S.exp=[];var o={i:uid(),t:a.text,a:+a.amount,dt:a.date||today(),g:a.category||'אחר'};(a.kind==='expense'?S.exp:S.inc).unshift(o);return (a.kind==='expense'?'נרשמה הוצאה ':'נרשמה הכנסה ')+nf(o.a)+': '+a.text}
 };
 function summaryToday(){
@@ -69,6 +71,7 @@ function offline(q){
     return {act:'event',a:{text:t2,date:dstr(w2.d),time:w2.time?pad(w2.d.getHours())+':'+pad(w2.d.getMinutes()):''}};
   }
   if((m=s.match(/^(?:תוסיף\s+)?משימה\s*[:\-]?\s*(.+)$/))||(m=s.match(/^(?:אני\s+)?צריך\s+(.+)$/)))return {act:'task',a:{text:clean(m[1])}};
+  if((m=s.match(/^(?:תוכן|רילס|טיקטוק|סטורי)\s*[:\-]\s*(.+)$/))){var w3=parseWhen(m[1]),t3=clean(w3.rest);return {act:'content',a:{text:t3,platform:/טיקטוק/.test(s)?'טיקטוק':/סטורי/.test(s)?'סטורי':'רילס',date:w3.day?dstr(w3.d):''}}}
   if((m=s.match(/^(?:רעיון|תשמור רעיון)\s*[:\-]?\s*(.+)$/)))return {act:'idea',a:{text:clean(m[1])}};
   if((m=s.match(/^(הוצאתי|שילמתי|הוצאה|קיבלתי|הכנסה|הרווחתי)\s*[:\-]?\s*(\d[\d,.]*)\s*(?:₪|ש"ח|שח|שקל(?:ים)?)?\s*(?:על|מ|עבור|בשביל)?\s*(.*)$/))){
     var exp=/הוצאתי|שילמתי|הוצאה/.test(m[1]);
@@ -80,7 +83,7 @@ function guessCat(t,exp){
   if(!exp)return /גיג|סט|מסיבה|הופעה|אירוע/.test(t)?'גיג':/ממומן|תוכן|רילס|סטורי|פוסט/.test(t)?'תוכן ממומן':/כרטיס|עמלה/.test(t)?'עמלות כרטיסים':/הפקה|ביט|מיקס|מאסטר/.test(t)?'הפקה':'אחר';
   return /מונית|דלק|רכבת|אוטובוס|חניה|נסיעה/.test(t)?'נסיעות':/מנוי|splice|ספוטיפיי|תוכנה|אפליקציה|plugin|פלאגין|rekordbox/i.test(t)?'תוכנה ומנויים':/אוזניות|רמקול|כבל|קונטרולר|ציוד|מחשב|מיקרופון/.test(t)?'ציוד':/פרסום|קידום|ממומן/.test(t)?'פרסום ושיווק':/קורס|שיעור|סדנה/.test(t)?'לימודים':'אחר';
 }
-var HELP='אפשר לכתוב לי למשל:\n• תזכיר לי מחר ב־10 להתקשר לאמא\n• תזכיר לי בעוד שעה לשלוח סט\n• ללוז שישי ב־23:00 סט בבארבי\n• משימה: לערוך רילס מהגיג\n• רעיון: מעבר טרייבל לטראנס\n• הוצאתי 45 על Splice\n• קיבלתי 1800 על סט\n• מה יש לי היום? / כמה הרווחתי החודש?';
+var HELP='אפשר לכתוב לי למשל:\n• תזכיר לי מחר ב־10 להתקשר לאמא\n• תזכיר לי בעוד שעה לשלוח סט\n• ללוז שישי ב־23:00 סט בבארבי\n• משימה: לערוך רילס מהגיג\n• רילס: מאחורי הקלעים של הסט, ביום שלישי\n• רעיון: מעבר טרייבל לטראנס\n• הוצאתי 45 על Splice\n• קיבלתי 1800 על סט\n• מה יש לי היום? / כמה הרווחתי החודש?';
 
 /* ---------- Claude ---------- */
 var TOOLS=[
@@ -88,9 +91,11 @@ var TOOLS=[
  {name:'add_idea',description:'שמירת רעיון',input_schema:{type:'object',properties:{text:{type:'string'},category:{type:'string',enum:['רילס','סט','טראק','עסקים','אחר']}},required:['text']}},
  {name:'add_reminder',description:'תזכורת בזמן מסוים. at בפורמט YYYY-MM-DDTHH:MM בשעון מקומי',input_schema:{type:'object',properties:{text:{type:'string'},at:{type:'string'},repeat:{type:'string',enum:['','d','w','m'],description:'d=כל יום, w=כל שבוע, m=כל חודש'}},required:['text','at']}},
  {name:'add_event',description:'אירוע בלוז (גיג, פגישה, צילום). date בפורמט YYYY-MM-DD, time בפורמט HH:MM או ריק',input_schema:{type:'object',properties:{text:{type:'string'},date:{type:'string'},time:{type:'string'}},required:['text','date']}},
+ {name:'add_content',description:'פריט תוכן לסושיאל בתהליך הפקה (רילס, טיקטוק וכו׳). date=תאריך פרסום מתוכנן YYYY-MM-DD',input_schema:{type:'object',properties:{text:{type:'string'},platform:{type:'string',enum:['רילס','טיקטוק','סטורי','פוסט','יוטיוב','שורטס']},stage:{type:'string',enum:['רעיון','תסריט','צילום','עריכה','מוכן','פורסם']},date:{type:'string'},time:{type:'string'},hook:{type:'string'}},required:['text']}},
+ {name:'add_deal',description:'שת״פ, גיג או עבודה בתשלום. status: פנייה, מו״מ, סגור, בוצע, שולם. due=תאריך תשלום צפוי',input_schema:{type:'object',properties:{text:{type:'string'},amount:{type:'number'},status:{type:'string',enum:['פנייה','מו״מ','סגור','בוצע','שולם']},due:{type:'string'}},required:['text']}},
  {name:'add_money',description:'רישום הכנסה או הוצאה בשקלים',input_schema:{type:'object',properties:{kind:{type:'string',enum:['income','expense']},amount:{type:'number'},text:{type:'string'},date:{type:'string'},category:{type:'string',description:'הכנסה: גיג, תוכן ממומן, עמלות כרטיסים, הפקה, אחר. הוצאה: ציוד, תוכנה ומנויים, נסיעות, פרסום ושיווק, לימודים, אחר'}},required:['kind','amount','text']}}
 ];
-var MAP={add_task:'task',add_idea:'idea',add_reminder:'reminder',add_event:'event',add_money:'money'};
+var MAP={add_content:'content',add_deal:'deal',add_task:'task',add_idea:'idea',add_reminder:'reminder',add_event:'event',add_money:'money'};
 function context(){
   var n=new Date(),t=today();
   var up=S.ev.filter(function(e){return e.dt>=t}).sort(function(a,b){return (a.dt+a.tm).localeCompare(b.dt+b.tm)}).slice(0,15).map(function(e){return e.dt+' '+(e.tm||'')+' '+e.t}).join('\n');
@@ -98,9 +103,9 @@ function context(){
   var tk=S.tk.filter(function(x){return !x.d}).slice(0,20).map(function(x){return '- '+x.t+' ('+x.g+')'}).join('\n');
   var id=S.id.slice(0,10).map(function(x){return '- '+x.t}).join('\n');
   return 'עכשיו: יום '+DAYS[n.getDay()]+', '+t+' '+pad(n.getHours())+':'+pad(n.getMinutes())+' (שעון ישראל).\n'+
-  'שם המשתמש: '+(S.name||'לא ידוע')+'. תקליטן, מפיק מוזיקה ויוצר תוכן שיוצא לעצמאות.\n\nלוז קרוב:\n'+(up||'ריק')+'\n\nתזכורות פתוחות:\n'+(rm||'אין')+'\n\nמשימות פתוחות:\n'+(tk||'אין')+'\n\nרעיונות אחרונים:\n'+(id||'אין')+'\n\nכסף:\n'+money();
+  'שם המשתמש: '+(S.name||'לא ידוע')+'. תקליטן, מפיק מוזיקה ויוצר תוכן שיוצא לעצמאות.\n\nלוז קרוב:\n'+(up||'ריק')+'\n\nתזכורות פתוחות:\n'+(rm||'אין')+'\n\nמשימות פתוחות:\n'+(tk||'אין')+'\n\nרעיונות אחרונים:\n'+(id||'אין')+'\n\nתוכן בהפקה:\n'+((S.ct||[]).filter(function(c){return c.st!=='פורסם'}).slice(0,15).map(function(c){return '- '+c.t+' ('+c.pl+', '+c.st+(c.dt?', '+c.dt:'')+')'}).join('\n')||'אין')+'\n\nשת״פים פתוחים:\n'+((S.dl||[]).filter(function(d){return d.st!=='שולם'}).map(function(d){return '- '+d.t+' '+(d.a||0)+'₪ ('+d.st+')'}).join('\n')||'אין')+'\n\nכסף:\n'+money();
 }
-var SYS='אתה העוזר הקטן בתוך אפליקציית "הסדר שלי". עונים תמיד בעברית, קצר, חם וענייני, בלי חנופה. כשהמשתמש מבקש להוסיף או לרשום משהו, משתמשים בכלים. כשחסר פרט חשוב (למשל שעה לתזכורת), בוחרים ברירת מחדל הגיונית ואומרים מה בחרת. אל תמציא מידע שלא מופיע בנתונים. בנושאי מס וכסף נותנים מידע כללי ולא ייעוץ מקצועי.';
+var SYS='אתה העוזר הקטן בתוך אפליקציית "הסדר שלי", של יוצר תוכן ותקליטן. אפשר גם לעזור לחשוב על הוקים, כיתובים ותזמון פרסומים. עונים תמיד בעברית, קצר, חם וענייני, בלי חנופה. כשהמשתמש מבקש להוסיף או לרשום משהו, משתמשים בכלים. כשחסר פרט חשוב (למשל שעה לתזכורת), בוחרים ברירת מחדל הגיונית ואומרים מה בחרת. אל תמציא מידע שלא מופיע בנתונים. בנושאי מס וכסף נותנים מידע כללי ולא ייעוץ מקצועי.';
 async function claude(q){
   var hist=chat().slice(-14).map(function(m){return {role:m.r==='u'?'user':'assistant',content:m.t}});
   while(hist.length&&hist[0].role!=='user')hist.shift();

@@ -308,7 +308,7 @@ function vSet(){
 function render(){
   var main=tab==='ai'?'':SUB[tab]?'more':tab;
   $('#nav').innerHTML=TABS.map(function(t){return '<button class="'+(main===t[0]?'on':'')+'" data-a="tab" data-k="'+t[0]+'" aria-label="'+t[2]+'"><span>'+t[1]+'</span>'+t[2]+(t[0]==='rm'?'<i class="dot"></i>':'')+'</button>'}).join('');
-  $('#v').innerHTML={today:vToday,ev:vEv,tk:vTk,id:vId,rm:vRm,more:vMore,inc:vInc,fu:vFu,op:vOp,set:vSet,ai:function(){return window.vAi?vAi():''}}[tab]();
+  $('#v').innerHTML=((window.XV&&XV[tab])||{today:vToday,ev:vEv,tk:vTk,id:vId,rm:vRm,more:vMore,inc:vInc,fu:vFu,op:vOp,set:vSet,ai:function(){return window.vAi?vAi():''}}[tab])();
   var dt=document.querySelectorAll('nav .dot');var c=dueList().length;dt.forEach(function(d){d.textContent=c||'';d.style.display=c?'':'none'});
 }
 function val(id){var e=$('#'+id);return e?e.value.trim():''}
@@ -369,6 +369,7 @@ render();check();setInterval(check,20000);
 if('serviceWorker' in navigator&&location.protocol!=='file:'){navigator.serviceWorker.register('sw.js').catch(function(){})}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 </script>
+<script src="plus.js"></script>
 <script src="ai.js"></script>
 </body>
 </html>
